@@ -40,10 +40,16 @@ public class Main {
         while (true) {
             print(">>> ");
             String input = scan.nextLine();
-            if (input.equals("print speed")) {
-                set_print_speed();
-                continue;
+
+            switch (input) {
+                case "print speed" -> {
+                    set_print_speed();
+                    continue;
+                }
+                case "!exit" -> System.exit(0);
+                case "!restart" -> start_game();
             }
+
 
             if (input.startsWith("/")) {
                 input = input.substring(1);
@@ -145,16 +151,80 @@ public class Main {
         print("╝\n");
     }
 
-    private static void gameover() {
-        println("""
-                ╔══════════════════════════════════════════════════════════════════════════════════╗
-                ║  _|_|_|    _|_|    _|      _|  _|_|_|_|    _|_|    _|      _|  _|_|_|_|  _|_|_|  ║\s
-                ║_|        _|    _|  _|_|  _|_|  _|        _|    _|  _|      _|  _|        _|    _|║\s
-                ║_|  _|_|  _|_|_|_|  _|  _|  _|  _|_|_|    _|    _|  _|      _|  _|_|_|    _|_|_|  ║\s
-                ║_|    _|  _|    _|  _|      _|  _|        _|    _|    _|  _|    _|        _|    _|║\s
-                ║  _|_|_|  _|    _|  _|      _|  _|_|_|_|    _|_|        _|      _|_|_|_|  _|    _|║\s
-                ╚══════════════════════════════════════════════════════════════════════════════════╝\s
+    public static void draw_ascii(String name){
+        switch (name) {
+            case "gameover" -> println("""
+            ╔══════════════════════════════════════════════════════════════════════════════════╗
+            ║  _|_|_|    _|_|    _|      _|  _|_|_|_|    _|_|    _|      _|  _|_|_|_|  _|_|_|  ║\s
+            ║_|        _|    _|  _|_|  _|_|  _|        _|    _|  _|      _|  _|        _|    _|║\s
+            ║_|  _|_|  _|_|_|_|  _|  _|  _|  _|_|_|    _|    _|  _|      _|  _|_|_|    _|_|_|  ║\s
+            ║_|    _|  _|    _|  _|      _|  _|        _|    _|    _|  _|    _|        _|    _|║\s
+            ║  _|_|_|  _|    _|  _|      _|  _|_|_|_|    _|_|        _|      _|_|_|_|  _|    _|║\s
+            ╚══════════════════════════════════════════════════════════════════════════════════╝\s
+            """);
+            case "axe" -> println("""
+                ╔════════════╗
+                ║  /'-./\\_   ║
+                ║ :    ||,>  ║
+                ║  \\.-'||    ║
+                ║      ||    ║
+                ║      ||    ║
+                ║      ||    ║
+                ╚════════════╝
                 """);
+            case "lantern" -> println("""
+            ╔═════════╗
+            ║   ___   ║
+            ║  |   |  ║
+            ║   \\_/   ║
+            ║    :    ║
+            ║    o    ║
+            ║ .d8|8b. ║
+            ║ T""T""T ║
+            ║ ] (|) [ ║
+            ║  [_|_]  ║
+            ╚═════════╝
+            """);
+            case "first aid kit" -> println("""
+                ╔══════════════════════╗
+                ║      _____________   ║
+                ║     /     __      /| ║
+                ║    /   __/ /_    / / ║
+                ║   /   /_  __/   / // ║
+                ║  /     /_/     / //  ║
+                ║ /_____________/ //   ║
+                ║ |______&______|//    ║
+                ║ |_____________|/     ║
+                ╚══════════════════════╝
+                """);
+            case "rope" -> println("""
+                ╔════════╗
+                ║  \\\\//  ║
+                ║   //   ║
+                ║  //\\\\  ║
+                ║  \\\\//  ║
+                ║   //   ║
+                ║  //\\\\  ║
+                ║  \\\\//  ║
+                ║   //   ║
+                ║  //\\\\  ║
+                ║  \\\\//  ║
+                ║   //   ║
+                ║  //\\\\  ║
+                ║  \\\\//  ║
+                ║   //   ║
+                ║  //\\\\  ║
+                ║  \\\\//  ║
+                ║   //   ║
+                ║  //\\\\  ║
+                ╚════════╝
+                """);
+        }
+    }
+
+    private static void gameover() {
+        draw_ascii("gameover");
+
         print("Press enter to restart");
         scan.nextLine();
         start_game();
@@ -174,10 +244,22 @@ public class Main {
         int input = get_user_input(4);
 
         switch (input) {
-            case 1 -> player.inventory.axe = 1;
-            case 2 -> player.inventory.lantern = 1;
-            case 3 -> player.inventory.first_aid_kit = 1;
-            case 4 -> player.inventory.rope = 1;
+            case 1 -> {
+                player.inventory.axe = 1;
+                draw_ascii("axe");
+            }
+            case 2 -> {
+                player.inventory.lantern = 1;
+                draw_ascii("lantern");
+            }
+            case 3 -> {
+                player.inventory.first_aid_kit = 1;
+                draw_ascii("first aid kit");
+            }
+            case 4 -> {
+                player.inventory.rope = 1;
+                draw_ascii("rope");
+            }
         }
 
         println("You decided to venture into the forest, carrying a " + tools_options[input - 1] + ".");
