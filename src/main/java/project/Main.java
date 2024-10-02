@@ -20,7 +20,7 @@ public class Main {
     public static class Inventory {
         int axe = 0;
         int lantern = 0;
-        Integer first_aid_kit = 0;
+        int first_aid_kit = 0;
         int rope = 0;
     }
 
@@ -38,16 +38,13 @@ public class Main {
             switch (move) {
                 case "repel" -> {
                     println(enemy.name + " anticipated the attack from that direction and easily repelled it.");
-                    take_damage(enemy.attack_damage);
+                    player.take_damage(enemy.attack_damage);
                 }
-                case "counter" -> {
-                    println("You attack and land a successful hit, dealing damage.");
-                    enemy.take_damage(damage);
-                    println("However, " + enemy.name + " quickly retaliates with a counterattack.");
-                    take_damage(enemy.attack_damage);
-                }
+
+                case "counter" -> println(enemy.name + " anticipated the attack from that direction and fully blocked it.");
+
                 case "block" -> {
-                    println(enemy.name + " The monster attempted to block your attack.");
+                    println(enemy.name + " attempted to block your attack.");
                     if (enemy.block < damage) {
                         println("However, it was only partially successful, allowing you to deal some damage anyway.");
                         println(enemy.block + " damage blocked.");
@@ -56,6 +53,7 @@ public class Main {
                         println(enemy.name + " fully blocked your attack, as you didn't deal enough damage to break through its defenses.");
                     }
                 }
+
                 case "none" -> {
                     println("You attack and land a successful hit, dealing damage.");
                     enemy.take_damage(damage);
@@ -85,10 +83,48 @@ public class Main {
             println(name + " health is at " + health + " - " + damage + " = " + (health - damage) + ".");
             health -= damage;
         }
+
+        public void attack(int player_block_dir, int move) {
+            String[] split = moves[move].split(" ");
+            int attack_dir = 0;
+            for (int i = 0; i < split.length; i++) {
+                String action = split[i];
+                if (action.contains("attack")) {
+                    attack_dir = i + 1;
+                }
+
+            }
+
+            if (split[0].contains("rest")) {
+                frustration--;
+            }
+
+            String attack_dir_string = switch (attack_dir) {
+                case 1 -> "from above";
+                case 2 -> "from below";
+                case 3 -> "from the left";
+                case 4 -> "from the right";
+                default -> "none";
+            };
+            if (attack_dir > 0) {
+
+                println(name + " attacks " + attack_dir_string + ".");
+                if (attack_dir != player_block_dir) {
+                    player.take_damage(attack_damage);
+                } else {
+                    println("You have fully blocked the attack.");
+                }
+
+            } else if (attack_dir == 0 && player_block_dir > 0) {
+                println("You attempted to block, but " + name + " did not attack.");
+            }
+
+        }
     }
 
 
     public static void print_options(String[] options) {
+        println("");
         for (int i = 0; i < options.length; i++) {
             if (!options[i].equals("none")) {
                 if (options[i].equals("back")) {
@@ -126,6 +162,7 @@ public class Main {
                 if (int_input < min || int_input > max) {
                     throw new Exception("Not in range");
                 }
+                println("");
                 return int_input;
             } catch (Exception e) {
                 skip = false;
@@ -137,6 +174,7 @@ public class Main {
                 }
             }
         }
+
 
 
     }
@@ -231,9 +269,9 @@ public class Main {
                 enemy.level = 5;
                 enemy.frustration = 0;
                 enemy.frustration_limit = 4;
-                enemy.moves_str = new String[]{"gazes intently at you.", "leaned to the right.", "leaned to the left.", "crouched down.", "dropped his hands tiredly"};
+                enemy.moves_str = new String[]{"gazes intently at you.", "leaned to the right.", "leaned to the left.", "ducked.", "dropped his hands tiredly"};
 //                                          top bottom left right
-                enemy.moves = new String[]{"repel,none repel,none repel,none repel,none", "counter,none counter,none counter,none repel,attack", "counter,none counter,none repel,attack counter,none", "block,none block,none block,none block,none", "none,none none,none none,none none,none"};
+                enemy.moves = new String[]{"repel,none repel,none repel,none repel,none", "none,none none,none none,none counter,attack", "none,none none,none counter,attack none,none", "block,rest block,rest block,rest block,rest", "none,none none,none none,none none,none"};
 
                 enemy.escape_death = "You tried to escape from the forester's monster,\nand you managed to run to the front door of the house.\nUnfortunately, when you tried to open it, you found that it was locked.\nBy the time you turned around, it was already too late.";
             }
@@ -250,16 +288,18 @@ public class Main {
 
         while (enemy.health > 0) {
             int move;
+            int player_block_dir = 0;
             if (enemy.frustration < enemy.frustration_limit) {
                 move = rand.nextInt(enemy.moves_str.length - 1);
             } else {
-                move = enemy.moves_str.length;
+                move = enemy.moves_str.length - 1;
+                enemy.frustration = 0;
             }
             println(enemy.name + " " + enemy.moves_str[move]);
             while (true) {
                 println("What will you do?");
-                print_options(new String[]{"attack", "block", "action", "escape"});
-                int input = get_user_input(1, 4);
+                print_options(new String[]{"attack", "block", "action"});
+                int input = get_user_input(1, 3);
                 if (input == 1) {
 
                     StringBuilder weapon_options_string = new StringBuilder();
@@ -293,34 +333,51 @@ public class Main {
                     break;
 
                 } else if (input == 2) {
+                    println("From which direction would you like to defend against an attack?");
+                    print_options(new String[]{"from above", "from below", "from the left", "from the right", "back"});
+                    input = get_user_input(0, 4);
+                    if (input == 0) {
+                        continue;
+                    }
+                    player_block_dir = input;
                     break;
-//                    TODO
-                } else if (input == 3) {
-//                    TODO
-                }
 
-                if (input == 4) {
-                    println("Are you sure you want to escape?");
-                    print_options(new String[]{"yes", "back"});
-                    input = get_user_input(0, 1);
+                } else if (input == 3) {
+                    print_options(new String[]{"do nothing", "escape", "back"});
+                    input = get_user_input(0, 2);
                     if (input == 1) {
-                        println(enemy.escape_death);
-                        gameover();
+                        break;
+                    } else if (input == 2) {
+                        println("Are you sure you want to escape?");
+                        print_options(new String[]{"yes", "back"});
+                        input = get_user_input(0, 1);
+                        if (input == 1) {
+                            println(enemy.escape_death);
+                            gameover();
+                        } else if (input == 0) {
+                            continue;
+                        }
+
                     } else if (input == 0) {
                         continue;
                     }
                 }
+
+
             }
 
-//            enemy.attack();
-//          TODO
+            if (enemy.health > 0) {
+                enemy.attack(player_block_dir, move);
+                enemy.frustration++;
+            }
+            if (player.health < 1) {
+                gameover();
+            }
         }
 
         print_banner(" THE FIGHT IS OVER ");
         println("You won!");
         println(enemy.name + " is defeated!");
-
-//        TODO
     }
 
 
@@ -454,7 +511,7 @@ public class Main {
             println("You decided to pass the forester's house, continuing on your way");
             println("The darkness deepened rapidly, and you couldn't see even the tip of your finger.");
             println("In just a few moments, total darkness had descended.");
-            if (player.inventory.lantern > 0) {
+            if (player.inventory.lantern == 1) {
                 println("You lit the lantern - your last hope.");
                 println("Under its faint light, you continued to wander through the forest in search of shelter.");
                 println("After walking a little farther, you came across the forester's house once again.");
@@ -474,7 +531,7 @@ public class Main {
                 println("You gazed around, but everything remained completely dark,");
                 println("the forest's density blocked out even a glimpse of moonlight.");
                 println("What will you do next?");
-                print_options(new String[]{"Lay down on the ground, trying to rest until the morning", "Attempt to make your way blindly through the forest in search of a source of light"});
+                print_options(new String[]{"Lay down on the ground, trying to rest until the morning", "Attempt to make your way blindly through the forest in search of a rce of light"});
                 input = get_user_input(1, 2);
                 if (input == 1) {
                     println("You lay down on the ground and fell asleep.");
@@ -498,24 +555,80 @@ public class Main {
         print_banner("Chapter 1 : An Abandoned, overgrown forester's cottage");
         println("You have opened the door entered the forester's cottage.");
         println("You walked into the living room.");
+        println("The fireplace in the living room was lit, and due to this light, you were able to see. ");
+        println("You noticed that there was a room to your right that looked like a kitchen,");
+        println("and at the far end of the room, there was a ladder leading up to the attic.");
         println("What are you going to do next?");
+
         print_options(new String[]{"Sleep on the floor in the living room", "Explore the room to your right (kitchen)", "Explore the attic"});
         int input = get_user_input(1, 3);
+
+        if (input == 3) {
+            println("You had climbed up the ladder in an attempt to explore the attic.");
+            println("However, as you ascended further from the firelit room below,");
+            println("the light from the fireplace was unable to penetrate the darkness,");
+            println("making it impossible for you to see anything.");
+
+            if (player.inventory.lantern == 1){
+                print_options(new String[]{"Go back downstairs into the main room.", "Attempt to explore the attic in the darkness, feeling your way through the space.", "Light up the lantern."});
+                input = get_user_input(1, 3);
+            } else {
+                print_options(new String[]{"Go back downstairs into the main room.", "Attempt to explore the attic in the darkness, feeling your way through the space."});
+                input = get_user_input(1, 2);
+            }
+
+            if (input == 2){
+                println("You had attempted to navigate through the attic,");
+                println("relying on your sense of sight as your guide.");
+                println("And then, suddenly, you caught sight of something: a dimly lit light source in the distance.");
+                println("You moved closer to it, but only realized too late that it was not a lantern or a light source");
+                println("it was actually a hole in the floor.");
+                println("As you fell through the opening, everything went black");
+
+                print_options(new String[]{"Open your eyes."});
+                get_user_input(1, 1);
+
+                println("You saw yourself gazing up at the fearsome form of the forester's monster looming above you");
+                gameover();
+
+            } else if (input == 3){
+                println("You lit up your lantern, casting its warm glow into the space around you.");
+                println("But in doing so, you inadvertently disturbed one who was peacefully sleeping there");
+                println("an angry bat stirred from its slumber and flew towards you with a snarl.");
+                println("As it attacked, its sharp claw swiped at your face, causing you to recoil in pain.");
+
+                print_options(new String[]{"Defend yourself."});
+                get_user_input(1, 1);
+
+                println("Trying to defend yourself against the ferocious creature, you lost your grip on the ladder.");
+                println("Unfortunately, while falling, your body flipped awkwardly, and you landed on the back of your head.");
+                println("The impact was too much for your neck to withstand, and it snapped.");
+                gameover();
+
+            }
+
+            print_options(new String[]{"Sleep on the floor in the living room", "Explore the room to your right (kitchen)"});
+            input = get_user_input(1, 2);
+
+        }
+
         if (input == 1) {
-            println("You had chosen to sleep on the floor in the living room, hoping to catch some rest,");
+            println("You decided to sleep on the floor in the living room, hoping to catch some rest,");
             println("but your attempt was disrupted by a noise coming from the room on your right.");
+
             print_options(new String[]{"Ignore the noise", "Check the source of the noise."});
             input = get_user_input(1, 2);
+
             if (input == 1) {
                 println("You decided that the noise was just your imagination and you shouldn't worry.");
-//                TODO
+//                EXIT
             } else if (input == 2) {
                 println("You approached the room to the right, being cautious as you entered.");
                 println("But the creaking of the floor woke up the one who was sleeping peacefully there.");
                 println("A forest monster has attacked you.");
                 fight("forester's monster");
-
-//                TODO
+                println("Too tired to even stand, you collapsed to the ground.");
+//                EXIT
             }
 
         } else if (input == 2) {
@@ -523,13 +636,12 @@ public class Main {
             println("But the creaking of the floor woke up the one who was sleeping peacefully there.");
             println("A forest monster has attacked you.");
             fight("forester's monster");
-
-//            TODO
-
-        } else if (input == 3) {
-//            TODO
-
+            println("Too tired to even stand, you collapsed to the ground.");
+//                EXIT
         }
+
+        println("You fell asleep peacefully without being disturbed throughout the night. ");
+        println("You woke up early in the morning feeling refreshed.");
 
     }
 
