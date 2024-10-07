@@ -6,6 +6,7 @@ package project;
         End Time:
 */
 
+import java.util.HashMap;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -17,17 +18,18 @@ public class Main {
 
     static boolean skip = false;
 
-    public static class Inventory {
-        int golden_coins = 0;
-        int axe = 0;
-        int lantern = 0;
-        int first_aid_kit = 0;
-        int rope = 0;
-    }
 
     public static class Player {
         int health = 100;
-        Inventory inventory = new Inventory();
+        HashMap<String, Integer> inventory = new HashMap<>();
+
+        public void collect(String item, int quantity) {
+            println("You have collected " + quantity + " " + item.replace("_", " "));
+            if (inventory.get(item) > 1) {
+                println("Now you have " + inventory.get(item) + " + " + quantity + " = " + (inventory.get(item) + quantity));
+            }
+            inventory.replace(item, (inventory.get(item) + quantity));
+        }
 
         void take_damage(int damage) {
             println("You took " + damage + " points of damage.");
@@ -62,12 +64,6 @@ public class Main {
                 }
             }
 
-        }
-
-        public void collect_coins(int coins) {
-            println("You have collected " + coins + "coins.");
-            println("You have " + inventory.golden_coins + " + " + coins + "= " + (inventory.golden_coins + coins) + " golden coins.");
-            inventory.golden_coins += coins;
         }
     }
 
@@ -152,6 +148,15 @@ public class Main {
             String input = scan.nextLine();
 
             switch (input) {
+                case "?" -> {
+                    println("Health: " + player.health);
+                    for (String item_str : player.inventory.keySet()) {
+                        if (player.inventory.get(item_str) > 0) {
+                            println(item_str.replace('_', ' ') + ": " + player.inventory.get(item_str));
+                        }
+                    }
+                    continue;
+                }
                 case "print speed" -> {
                     set_print_speed();
                     continue;
@@ -286,9 +291,18 @@ public class Main {
             }
             case "bat" -> {
                 enemy.name = "bat";
-                enemy.health = 30;
+                enemy.health = 20;
+                enemy.max_health = 20;
+                enemy.block = 0;
+                enemy.attack_damage = 6;
                 enemy.level = 3;
-                enemy.moves_str = new String[]{"gazes intently at you", "leaned to the right", "leaned to the left", "crouched down"};
+                enemy.frustration = 0;
+                enemy.frustration_limit = 4;
+                enemy.moves_str = new String[]{"flew above your head", "flew to the right.", "flew to the left.", "landed on the ground tired"};
+//                                          top bottom left right
+                enemy.moves = new String[]{"repel,attack none,none none,none none,none", "none,none none,none none,none repel,attack", "none,none none,none repel,attack none,none", "none,none none,none none,none none,none"};
+
+                enemy.escape_death = "You tried to escape from the bat,\nbut while running you did no notice the hole in the floor and had fallen through it\nUnfortunately, while falling, your body flipped awkwardly, and you landed on the back of your head.\nThe impact was too much for your neck to withstand, and it snapped.";
             }
             default -> throw new IllegalStateException("Unexpected value: " + enemy_str);
         }
@@ -315,7 +329,7 @@ public class Main {
                 if (input == 1) {
 
                     StringBuilder weapon_options_string = new StringBuilder();
-                    for (String weapon : new String[]{"knife", (player.inventory.axe > 0) ? "axe" : "none", "back"}) {
+                    for (String weapon : new String[]{"knife", (player.inventory.get("axe") > 0) ? "axe" : "none", "back"}) {
                         if (!weapon.equals("none")) {
                             weapon_options_string.append(weapon).append(" ");
                         }
@@ -476,6 +490,15 @@ public class Main {
 
         player = new Player();
 
+        player.inventory.put("golden_coins", 0);
+        player.inventory.put("axe", 0);
+        player.inventory.put("lantern", 0);
+        player.inventory.put("first_aid_kit", 0);
+        player.inventory.put("rope", 0);
+        player.inventory.put("wooden_key", 0);
+        player.inventory.put("old_frying_pan", 0);
+        player.inventory.put("backpack", 0);
+
 
         println("You decided to go hunting what will you take with you: ");
 
@@ -485,24 +508,10 @@ public class Main {
 
         int input = get_user_input(1, 4);
 
-        switch (input) {
-            case 1 -> {
-                player.inventory.axe = 1;
-                draw_ascii("axe");
-            }
-            case 2 -> {
-                player.inventory.lantern = 1;
-                draw_ascii("lantern");
-            }
-            case 3 -> {
-                player.inventory.first_aid_kit = 1;
-                draw_ascii("first aid kit");
-            }
-            case 4 -> {
-                player.inventory.rope = 1;
-                draw_ascii("rope");
-            }
-        }
+        String tool_to_take = tools_options[input - 1].replace(' ', '_');
+
+        player.inventory.replace(tool_to_take, 1);
+        draw_ascii(tool_to_take);
 
         println("You decided to venture into the forest, carrying a " + tools_options[input - 1] + ".");
         println("The afternoon sun was beginning to set, signaling that evening was approaching.");
@@ -523,7 +532,7 @@ public class Main {
             println("You decided to pass the forester's house, continuing on your way");
             println("The darkness deepened rapidly, and you couldn't see even the tip of your finger.");
             println("In just a few moments, total darkness had descended.");
-            if (player.inventory.lantern == 1) {
+            if (player.inventory.get("lantern") == 1) {
                 println("You lit the lantern - your last hope.");
                 println("Under its faint light, you continued to wander through the forest in search of shelter.");
                 println("After walking a little farther, you came across the forester's house once again.");
@@ -581,7 +590,7 @@ public class Main {
             println("the light from the fireplace was unable to penetrate the darkness,");
             println("making it impossible for you to see anything.");
 
-            if (player.inventory.lantern == 1) {
+            if (player.inventory.get("lantern") == 1) {
                 print_options(new String[]{"Go back downstairs into the main room.", "Attempt to explore the attic in the darkness, feeling your way through the space.", "Light up the lantern."});
                 input = get_user_input(1, 3);
             } else {
@@ -628,18 +637,19 @@ public class Main {
             println("You decided to sleep on the floor in the living room, hoping to catch some rest,");
             println("but your attempt was disrupted by a noise coming from the room on your right.");
 
-            print_options(new String[]{"Ignore the noise", "Check the source of the noise."});
+            print_options(new String[]{"Check the source of the noise.", "Ignore the noise"});
             input = get_user_input(1, 2);
 
-            if (input == 1) {
+            if (input == 2) {
                 println("You decided that the noise was just your imagination and you shouldn't worry.");
                 chapter1_page2(false);
-            } else if (input == 2) {
+            } else if (input == 1) {
                 println("You approached the room to the right, being cautious as you entered.");
                 println("But the creaking of the floor woke up the one who was sleeping peacefully there.");
                 println("A forest monster has attacked you.");
                 fight("forester's monster");
-                println("Too tired to even stand, you collapsed to the ground.");
+                println("You had taken a few steps and exited the living room before");
+                println("being too tired to even stand, whereupon you collapsed to the ground.");
                 chapter1_page2(true);
             }
 
@@ -648,7 +658,8 @@ public class Main {
             println("But the creaking of the floor woke up the one who was sleeping peacefully there.");
             println("A forest monster has attacked you.");
             fight("forester's monster");
-            println("Too tired to even stand, you collapsed to the ground.");
+            println("You had taken a few steps and exited the living room before");
+            println("being too tired to even stand, whereupon you collapsed to the ground.");
             chapter1_page2(true);
         }
 
@@ -660,19 +671,24 @@ public class Main {
         println("You woke up early in the morning feeling refreshed.");
 
         boolean is_kitchen_explored = false;
-        boolean is_living_room_explored = false;
         boolean is_attic_explored = false;
-        boolean is_secret_room_found = false;
-        boolean is_secret_room_explored = false;
 
         while (true) {
+            if (is_kitchen_explored && player.inventory.get("wooden_key") == 1 && player.inventory.get("old_frying_pan") == 0) {
+                println("Now that you have a backpack, you can take the old broken frying pan with you.");
+                print_options(new String[]{"Take it.", "Do not take it"});
+                int input = get_user_input(1, 2);
+                if (input == 1) {
+                    println("You decided to take the frying pan with you.");
+                    player.inventory.replace("old_frying_pan", 1);
+                } else if (input == 0) {
+                    println("You decided not to take the frying pan with you.");
+                }
+            }
 
             StringBuilder options_string = new StringBuilder();
             for (String option : new String[]{"Leave the cottage.",
                     (!is_kitchen_explored) ? "Explore the room to your right (kitchen)." : "none",
-                    (!is_living_room_explored) ? "Explore the living room." : "none",
-                    (!is_secret_room_found) ? "Explore the cottage in more detail." : "none",
-                    (!is_secret_room_explored && is_secret_room_found) ? "Explore the secret room" : "none",
                     (!is_attic_explored) ? "Explore the attic." : "none"}) {
                 if (!option.equals("none")) {
                     options_string.append(option).append("split");
@@ -685,20 +701,169 @@ public class Main {
             print_options(options);
             int input = get_user_input(1, options.length);
 
-            System.out.println(options[input-1]);
+            System.out.println(options[input - 1]);
 
-            if (options[input - 1].equals("Explore the room to your right (kitchen).")){
-                println("You approached the room to the right, being cautious as you entered.");
-                if (is_forester_monster_dead){
-                    println("You notice that the forester's monster corpse is gone, and in its place there is a small pile of gold coins.");
-                    player.collect_coins(10);
+            if (options[input - 1].equals("Leave the cottage.")) {
+                println("You approached the front door of the cottage.");
+                println("However, when you attempted to open the door, you found that it was locked.");
+                println("What will you do next?");
+
+                while (true) {
+
+
+                    StringBuilder door_options_string = new StringBuilder();
+                    for (String door_option : new String[]{"Try to knock down the door.",
+                            (player.inventory.get("axe") == 1) ? "Break down the door with an axe." : "none",
+                            "Return to the living room.",
+                            (player.inventory.get("wooden_key") == 1) ? "Open the door with a wooden key." : "none"}) {
+                        if (!door_option.equals("none")) {
+                            door_options_string.append(door_option).append("split");
+                        }
+
+                    }
+                    String[] door_options = door_options_string.toString().split("split");
+
+
+                    print_options(door_options);
+
+                    input = get_user_input(1, door_options.length);
+
+
+                    if (door_options[input - 1].equals("Break down the door with an axe.")) {
+                        for (int i = 0; i <= 3; i++) {
+                            println("You swung an axe.");
+                            print_options(new String[]{"Hit the door with an axe."});
+                            get_user_input(1, 1);
+                            println("Splinters flew out of the door");
+                        }
+                        println("However, this time the axe was stopped by a hidden metal mechanism inside the door.");
+                        println("As you listened, a strange, metallic sound echoed through the air,");
+                        println("and within a few seconds, your body was riddled with a hundred metallic darts.");
+                        gameover();
+
+                    } else if (door_options[input - 1].equals("Try to knock down the door.")) {
+                        println("The door wouldn't budge.");
+                    } else if (door_options[input - 1].equals("Return to the living room.")) {
+                        break;
+                    } else if (door_options[input - 1].equals("Open the door with a wooden key.")) {
+                        println("Upon opening the door you hear strange metallic noise.");
+                        println("You had triggered some kind of mechanism.");
+                        println("A single metallic dart shot you in the back.");
+                        player.take_damage(5);
+                        chapter2();
+                    }
                 }
+                continue;
+
+            }
+
+            if (options[input - 1].equals("Explore the attic.")) {
+                println("You climbed up the ladder leading to the attic, being cautious as you entered.");
+                println("But the creaking of the floor woke up the one who was sleeping peacefully there.");
+                println("A bat has attacked you.");
+                fight("bat");
+                println("Within seconds, the bat's corpse had disappeared, leaving only one wing and a few coins.");
+                println("You picked up the bat's wing");
+                player.collect("golden_coins", 3);
+                print_options(new String[]{"Go further."});
+                get_user_input(1, 1);
+                println("Going further you found a chest.");
+                print_options(new String[]{"Open the chest."});
+                get_user_input(1, 1);
+                println("Inside the chest you found a wooden key and a backpack.");
+                println("Now you can finally carry more things with you.");
+                player.inventory.replace("backpack", 1);
+                player.inventory.replace("wooden_key", 1);
+                is_attic_explored = true;
+                print_options(new String[]{"Return to the living room."});
+                get_user_input(1, 1);
+                continue;
+            }
+            if (options[input - 1].equals("Explore the room to your right (kitchen).")) {
+                println("You approached the room to the right, being cautious as you entered.");
+                if (is_forester_monster_dead) {
+                    println("You notice that the forester's monster corpse is gone, and in its place there is a small pile of gold coins.");
+                    player.collect("golden_coins", 10);
+                }
+                println("Upon closer examination of the room, you were certain it was a kitchen,");
+                println("yet you couldn't see any food out in the open.");
+                println("Therefore, you decided to search through the cabinets.");
+
+                boolean closet1 = false;
+                boolean closet2 = false;
+                boolean closet3 = false;
+                boolean closet4 = false;
+                boolean closet5 = false;
+
+                while (true) {
+                    println("Which cabinet to search?");
+
+                    StringBuilder closet_options_string = new StringBuilder();
+                    for (String closet_option : new String[]{
+                            (!closet1) ? "cabinet on the left bottom" : "none",
+                            (!closet2) ? "cabinet on the right bottom" : "none",
+                            (!closet3) ? "cabinet on the left top" : "none",
+                            (!closet4) ? "cabinet on the right top" : "none",
+                            (!closet5) ? "cabinet that is in front of you" : "none",
+
+                    }) {
+                        if (!closet_option.equals("none")) {
+                            closet_options_string.append(closet_option).append("split");
+                        }
+
+                    }
+                    String[] closet_options = closet_options_string.toString().split("split");
+
+                    print_options(closet_options);
+                    input = get_user_input(1, closet_options.length);
+
+                    if (closet_options.length == 1) {
+                        println("Finally, one of the cabinets wasn't empty after all:");
+                        println("in that cabinet you found an old frying pan,");
+                        println("but it was broken and had no handle, making it useless as a potential weapon.");
+                        if (player.inventory.get("backpack") == 1) {
+                            print_options(new String[]{"Take it.", "Do not take it"});
+                            input = get_user_input(1, 2);
+                            if (input == 1) {
+                                println("You decided to take the frying pan with you.");
+                                player.inventory.replace("old_frying_pan", 1);
+                            } else if (input == 0) {
+                                println("You decided not to take the frying pan with you.");
+                            }
+                        } else {
+                            println("However, you didn't have a bag to take the frying pan with you, so you had to leave it behind.");
+                        }
+                        break;
+                    }
+
+                    println("You open the cabinet, but it is completely empty.");
+                    switch (closet_options[input - 1]) {
+                        case "cabinet on the left bottom" -> closet1 = true;
+                        case "cabinet on the right bottom" -> closet2 = true;
+                        case "cabinet on the left top" -> closet3 = true;
+                        case "cabinet on the right top" -> closet4 = true;
+                        case "cabinet that is in front of you" -> closet5 = true;
+                    }
+
+
+                }
+
+                println("You leave the kitchen and return to the living room.");
+                is_kitchen_explored = true;
+
 
             }
 
 
         }
 
+    }
+
+    public static void chapter2() {
+        print_banner("Chapter 2: Outside");
+        println("To be continued...");
+        gameover();
+//        println("you ");
     }
 
 
