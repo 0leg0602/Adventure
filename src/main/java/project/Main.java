@@ -18,6 +18,7 @@ public class Main {
     static boolean skip = false;
 
     public static class Inventory {
+        int golden_coins = 0;
         int axe = 0;
         int lantern = 0;
         int first_aid_kit = 0;
@@ -41,7 +42,8 @@ public class Main {
                     player.take_damage(enemy.attack_damage);
                 }
 
-                case "counter" -> println(enemy.name + " anticipated the attack from that direction and fully blocked it.");
+                case "counter" ->
+                        println(enemy.name + " anticipated the attack from that direction and fully blocked it.");
 
                 case "block" -> {
                     println(enemy.name + " attempted to block your attack.");
@@ -61,6 +63,12 @@ public class Main {
             }
 
         }
+
+        public void collect_coins(int coins) {
+            println("You have collected " + coins + "coins.");
+            println("You have " + inventory.golden_coins + " + " + coins + "= " + (inventory.golden_coins + coins) + " golden coins.");
+            inventory.golden_coins += coins;
+        }
     }
 
     static Player player;
@@ -68,6 +76,7 @@ public class Main {
     public static class Enemy {
         String name;
         int health;
+        int max_health;
         int block;
         int attack_damage;
         int level;
@@ -176,7 +185,6 @@ public class Main {
         }
 
 
-
     }
 
     public static void set_print_speed() {
@@ -264,6 +272,7 @@ public class Main {
             case "forester's monster" -> {
                 enemy.name = "The forester's monster";
                 enemy.health = 24;
+                enemy.max_health = 100;
                 enemy.block = 3;
                 enemy.attack_damage = 20;
                 enemy.level = 5;
@@ -283,6 +292,9 @@ public class Main {
             }
             default -> throw new IllegalStateException("Unexpected value: " + enemy_str);
         }
+
+        print_banner(enemy.name + ": level: " + enemy.level + ", health: " + enemy.health + "/" + enemy.max_health + ", attack:" + enemy.attack_damage + ", block:" + enemy.block);
+
 
         Random rand = new Random();
 
@@ -506,7 +518,7 @@ public class Main {
         input = get_user_input(1, 2);
 
         if (input == 1) {
-            chapter1();
+            chapter1_page1();
         } else if (input == 2) {
             println("You decided to pass the forester's house, continuing on your way");
             println("The darkness deepened rapidly, and you couldn't see even the tip of your finger.");
@@ -518,7 +530,7 @@ public class Main {
                 print_options(new String[]{"Go into the forester's house", "Walk past the forester's house"});
                 input = get_user_input(1, 2);
                 if (input == 1) {
-                    chapter1();
+                    chapter1_page1();
                 } else if (input == 2) {
                     println("Despite going into the forester's house being the most obvious decision.");
                     println("You decided to pass by it.");
@@ -551,7 +563,7 @@ public class Main {
     }
 
 
-    private static void chapter1() {
+    private static void chapter1_page1() {
         print_banner("Chapter 1 : An Abandoned, overgrown forester's cottage");
         println("You have opened the door entered the forester's cottage.");
         println("You walked into the living room.");
@@ -560,7 +572,7 @@ public class Main {
         println("and at the far end of the room, there was a ladder leading up to the attic.");
         println("What are you going to do next?");
 
-        print_options(new String[]{"Sleep on the floor in the living room", "Explore the room to your right (kitchen)", "Explore the attic"});
+        print_options(new String[]{"Sleep on the floor in the living room.", "Explore the room to your right (kitchen).", "Explore the attic."});
         int input = get_user_input(1, 3);
 
         if (input == 3) {
@@ -569,7 +581,7 @@ public class Main {
             println("the light from the fireplace was unable to penetrate the darkness,");
             println("making it impossible for you to see anything.");
 
-            if (player.inventory.lantern == 1){
+            if (player.inventory.lantern == 1) {
                 print_options(new String[]{"Go back downstairs into the main room.", "Attempt to explore the attic in the darkness, feeling your way through the space.", "Light up the lantern."});
                 input = get_user_input(1, 3);
             } else {
@@ -577,7 +589,7 @@ public class Main {
                 input = get_user_input(1, 2);
             }
 
-            if (input == 2){
+            if (input == 2) {
                 println("You had attempted to navigate through the attic,");
                 println("relying on your sense of sight as your guide.");
                 println("And then, suddenly, you caught sight of something: a dimly lit light source in the distance.");
@@ -591,7 +603,7 @@ public class Main {
                 println("You saw yourself gazing up at the fearsome form of the forester's monster looming above you");
                 gameover();
 
-            } else if (input == 3){
+            } else if (input == 3) {
                 println("You lit up your lantern, casting its warm glow into the space around you.");
                 println("But in doing so, you inadvertently disturbed one who was peacefully sleeping there");
                 println("an angry bat stirred from its slumber and flew towards you with a snarl.");
@@ -607,7 +619,7 @@ public class Main {
 
             }
 
-            print_options(new String[]{"Sleep on the floor in the living room", "Explore the room to your right (kitchen)"});
+            print_options(new String[]{"Sleep on the floor in the living room.", "Explore the room to your right (kitchen)."});
             input = get_user_input(1, 2);
 
         }
@@ -621,14 +633,14 @@ public class Main {
 
             if (input == 1) {
                 println("You decided that the noise was just your imagination and you shouldn't worry.");
-//                EXIT
+                chapter1_page2(false);
             } else if (input == 2) {
                 println("You approached the room to the right, being cautious as you entered.");
                 println("But the creaking of the floor woke up the one who was sleeping peacefully there.");
                 println("A forest monster has attacked you.");
                 fight("forester's monster");
                 println("Too tired to even stand, you collapsed to the ground.");
-//                EXIT
+                chapter1_page2(true);
             }
 
         } else if (input == 2) {
@@ -637,11 +649,55 @@ public class Main {
             println("A forest monster has attacked you.");
             fight("forester's monster");
             println("Too tired to even stand, you collapsed to the ground.");
-//                EXIT
+            chapter1_page2(true);
         }
 
+
+    }
+
+    public static void chapter1_page2(boolean is_forester_monster_dead) {
         println("You fell asleep peacefully without being disturbed throughout the night. ");
         println("You woke up early in the morning feeling refreshed.");
+
+        boolean is_kitchen_explored = false;
+        boolean is_living_room_explored = false;
+        boolean is_attic_explored = false;
+        boolean is_secret_room_found = false;
+        boolean is_secret_room_explored = false;
+
+        while (true) {
+
+            StringBuilder options_string = new StringBuilder();
+            for (String option : new String[]{"Leave the cottage.",
+                    (!is_kitchen_explored) ? "Explore the room to your right (kitchen)." : "none",
+                    (!is_living_room_explored) ? "Explore the living room." : "none",
+                    (!is_secret_room_found) ? "Explore the cottage in more detail." : "none",
+                    (!is_secret_room_explored && is_secret_room_found) ? "Explore the secret room" : "none",
+                    (!is_attic_explored) ? "Explore the attic." : "none"}) {
+                if (!option.equals("none")) {
+                    options_string.append(option).append("split");
+                }
+
+            }
+            String[] options = options_string.toString().split("split");
+
+
+            print_options(options);
+            int input = get_user_input(1, options.length);
+
+            System.out.println(options[input-1]);
+
+            if (options[input - 1].equals("Explore the room to your right (kitchen).")){
+                println("You approached the room to the right, being cautious as you entered.");
+                if (is_forester_monster_dead){
+                    println("You notice that the forester's monster corpse is gone, and in its place there is a small pile of gold coins.");
+                    player.collect_coins(10);
+                }
+
+            }
+
+
+        }
 
     }
 
