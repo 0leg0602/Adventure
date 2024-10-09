@@ -11,6 +11,7 @@ import java.util.*;
 public class Main {
 
     static Scanner scan = new Scanner(System.in);
+//    static Random rand = new Random();
 
     static int print_speed = 20;
 
@@ -148,6 +149,7 @@ public class Main {
                 }
                 case "!exit" -> System.exit(0);
                 case "!restart" -> start_game();
+                case "!@#" -> chapter2();
             }
 
 
@@ -201,7 +203,7 @@ public class Main {
 
         int user_number_input = (get_user_input(min, options.length - ((min == 0) ? 1 : 0)));
 
-        if (user_number_input == 0){
+        if (user_number_input == 0) {
             return "back";
         }
 
@@ -327,12 +329,11 @@ public class Main {
         print_banner(enemy.name + ": level: " + enemy.level + ", health: " + enemy.health + "/" + enemy.max_health + ", attack:" + enemy.attack_damage + ", block:" + enemy.block);
 
 
-        Random rand = new Random();
-
         while (enemy.health > 0) {
             int move;
             int player_block_dir = 0;
             if (enemy.frustration < enemy.frustration_limit) {
+                Random rand = new Random();
                 move = rand.nextInt(enemy.moves_str.length - 1);
             } else {
                 move = enemy.moves_str.length - 1;
@@ -468,7 +469,7 @@ public class Main {
                     ║  [_|_]  ║
                     ╚═════════╝
                     """);
-            case "first aid kit" -> println("""
+            case "first_aid_kit" -> println("""
                     ╔══════════════════════╗
                     ║      _____________   ║
                     ║     /     __      /| ║
@@ -502,6 +503,54 @@ public class Main {
                     ║  //\\\\  ║
                     ╚════════╝
                     """);
+            case "cross" -> println("""
+                    ╔════════════╗
+                    ║ _        _ ║
+                    ║  \\\\    //  ║
+                    ║   \\\\  //   ║
+                    ║    \\\\//    ║
+                    ║     ||     ║
+                    ║    //\\\\    ║
+                    ║   //  \\\\   ║
+                    ║ _//    \\\\_ ║
+                    ║            ║
+                    ╚════════════╝
+                    """);
+            case "triangle" -> println("""
+                    ╔════════════╗
+                    ║   ______   ║
+                    ║  /\\_____\\  ║
+                    ║ _\\ \\__/_/_ ║
+                    ║/\\_\\ \\_____\\║
+                    ║\\ \\ \\/ / / /║
+                    ║ \\ \\/ /\\/ / ║
+                    ║  \\/_/\\/_/  ║
+                    ║            ║
+                    ╚════════════╝
+                    """);
+            case "light" -> println("""
+                    ╔═════════════════════╗
+                    ║   *****      *****  ║
+                    ║  *     *    *     * ║
+                    ║ *  ***  *  *  ***  *║
+                    ║*   ***   *   ***   *║
+                    ║ *  ***  *  *  ***  *║
+                    ║  *     *    *     * ║
+                    ║   *****      *****  ║
+                    ╚═════════════════════╝
+                    """);
+            case "cube" -> println("""
+                    ╔═════════════╗
+                    ║ _________   ║
+                    ║|  _____  |\\ ║
+                    ║| |\\ ___| | \\║
+                    ║| | |   | | |║
+                    ║| | |___| | |║
+                    ║\\ | |____\\| |║
+                    ║ \\|_________|║
+                    ║             ║
+                    ╚═════════════╝
+                    """);
         }
     }
 
@@ -523,7 +572,7 @@ public class Main {
         player.inventory.put("first_aid_kit", 0);
         player.inventory.put("rope", 0);
         player.inventory.put("wooden_key", 0);
-        player.inventory.put("old_frying_pan", 1);
+        player.inventory.put("old_frying_pan", 0);
         player.inventory.put("backpack", 0);
 
 
@@ -856,7 +905,6 @@ public class Main {
                     println("You open the cabinet, but it is completely empty.");
 
 
-
                 }
 
                 println("You leave the kitchen and return to the living room.");
@@ -871,10 +919,81 @@ public class Main {
     }
 
     public static void chapter2() {
+        println("You leave the cottage and go outside.");
         print_banner("Chapter 2: Outside");
+        get_user_choice(new String[]{"Look around."});
+        println("You look around, but you're unable to find any kind of trail.");
+        get_user_choice(new String[]{"Go round the cottage."});
+        println("To your surprise, there are no trails around the cottage.");
+        println("It was just in the middle of the forest, with no path leading to it.");
+        println("So you had only one choice.");
+        get_user_choice(new String[]{"Attempt to go through the forest."});
+        println("You attempt to go through the forest.");
+
+        int distance = 3;
+        int number_of_tries = 0;
+        Random rand = new Random();
+
+        String[] random_case = {"cube","light","cross","triangle"};
+        for (int i = random_case.length - 1; i > 0; i--)
+        {
+            int index = rand.nextInt(i + 1);
+            String  a = random_case[index];
+            random_case[index] = random_case[i];
+            random_case[i] = a;
+        }
+
+        System.out.println(Arrays.toString(random_case));
+
+        while (distance < 10) {
+
+            if (distance <= 0){
+                println("Making your way through the forest you noticed that you had made a loop and returned back to the cottage.");
+                get_user_choice(new String[]{"Attempt to go through the forest again."});
+                distance = 3;
+            }
+            int random_sign = rand.nextInt(4) + 1;
+            String sign = switch (random_sign) {
+                case 1 -> "cross";
+                case 2 -> "triangle";
+                case 3 -> "light";
+                case 4 -> "cube";
+                default -> throw new IllegalStateException("Unexpected value");
+            };
+            println("You continue walking until you notice a tree with a strange sign carved into it:");
+            println("");
+            int prev_print_speed = print_speed;
+            print_speed = (print_speed <= 5) ? 0 : 5;
+            draw_ascii(sign);
+            print_speed = prev_print_speed;
+            String input = get_user_choice(new String[]{"go forward", "go back", "go left", "go right"});
+            if (
+                    input.equals("go forward") && sign.equals(random_case[0]) ||
+                            input.equals("go back") && sign.equals(random_case[1]) ||
+                            input.equals("go left") && sign.equals(random_case[2]) ||
+                            input.equals("go right") && sign.equals(random_case[3])
+
+            ) {
+                if (number_of_tries >= 3) {
+                    println((rand.nextInt(2) == 0) ? "You won't recognize this part of the forest."
+                            : (rand.nextInt(2) == 0) ? "The trees began to look a little different." :
+                            "It seems that the tree branches have begun to shift, letting in more sunlight");
+                }
+                distance++;
+            } else {
+                if (number_of_tries >= 3) {
+                    println((rand.nextInt(2) == 0) ? "It feels like you've been here before."
+                            : (rand.nextInt(2) == 0) ? "The trees around you looked familiar." :
+                            "The familiar landmarks seem to be repeating themselves");
+                }
+                distance--;
+            }
+            number_of_tries++;
+        }
+
+        println("You made you way out of the forest.");
         println("To be continued...");
         gameover();
-//        println("you ");
     }
 
 
